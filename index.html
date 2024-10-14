@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>ChatGPT 模拟界面</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #chatbox { width: 600px; height: 400px; border: 1px solid #ccc; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
+        #user-input { width: 500px; }
+        #send-button { width: 80px; }
+        .message { margin: 5px 0; }
+        .user { color: blue; }
+        .bot { color: green; }
+    </style>
+</head>
+<body>
+
+<h1>ChatGPT 模拟界面</h1>
+<div id="chatbox"></div>
+<input type="text" id="user-input" placeholder="请输入您的消息...">
+<button id="send-button">发送</button>
+
+<script>
+    const chatbox = document.getElementById('chatbox');
+    const userInput = document.getElementById('user-input');
+    const sendButton = document.getElementById('send-button');
+
+    // 点击发送按钮或按下回车键时触发
+    sendButton.addEventListener('click', sendMessage);
+    userInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    function sendMessage() {
+        const message = userInput.value.trim();
+        if (message === '') return;
+
+        // 显示用户消息
+        const userMessage = document.createElement('div');
+        userMessage.className = 'message user';
+        userMessage.textContent = '您：' + message;
+        chatbox.appendChild(userMessage);
+
+        // 清空输入框
+        userInput.value = '';
+
+        // 发送 POST 请求到 FastAPI 后端
+        fetch('http://127.0.0.1:8002/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text: message })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // 显示机器人回复
+            const botMessage = document.createElement('div');
+            botMessage.className = 'message bot';
+            botMessage.textContent = '机器人：' + data.response;
+            chatbox.appendChild(botMessage);
+
+            // 滚动到最新消息
+            chatbox.scrollTop = chatbox.scrollHeight;
+        })
+        .catch(error => {
+            console.error('错误:', error);
+            alert('发送失败，请检查网络或后端服务。');
+        });
+    }
+</script>
+
+</body>
+</html>
